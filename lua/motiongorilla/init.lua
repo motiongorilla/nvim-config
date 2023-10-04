@@ -1,5 +1,6 @@
 require("motiongorilla.remap")
 require("motiongorilla.set")
+require("motiongorilla.packer")
 
 local augroup = vim.api.nvim_create_augroup
 local MotiongorillaGroup = augroup('motiongorilla', {})
