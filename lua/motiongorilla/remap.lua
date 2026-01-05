@@ -11,7 +11,7 @@ vim.keymap.set("n", "<C-u>", "<C-u>zz")
 vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
 --
---vim.keymap.set("n", "<leader>vwm", function()
+-- vim.keymap.set("n", "<leader>vwm", function()
 --    require("vim-with-me").StartVimWithMe()
 --end)
 --vim.keymap.set("n", "<leader>svwm", function()
@@ -42,9 +42,30 @@ vim.keymap.set("n", "<leader>j", "<cmd>lprev<CR>zz")
 vim.keymap.set("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]])
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
 
-vim.keymap.set("n", "<leader>vpp", "<cmd>e ~/.dotfiles/nvim/.config/nvim/lua/theprimeagen/packer.lua<CR>");
-vim.keymap.set("n", "<leader>mr", "<cmd>CellularAutomaton make_it_rain<CR>");
-
 vim.keymap.set("n", "<leader><leader>", function()
     vim.cmd("so")
+end)
+
+vim.api.nvim_create_autocmd("TermOpen", {
+    group = vim.api.nvim_create_augroup("custom-term-open", {clear=true}),
+    callback = function()
+        vim.opt.number = false
+        vim.opt.relativenumber = false
+    end,
+})
+
+local job_id = 0
+vim.keymap.set("n", "<space>st", function()
+    vim.cmd.vnew()
+    vim.cmd.term()
+    vim.cmd.wincmd("J")
+    vim.api.nvim_win_set_height(0, 10)
+
+    job_id = vim.bo.channel
+end)
+
+vim.keymap.set("t","<Esc>","<C-\\><C-n>")
+
+vim.keymap.set("n", "<leader>cmp", function()
+    vim.fn.chansend(job_id, {"mingw32-make -B\r\n"})
 end)

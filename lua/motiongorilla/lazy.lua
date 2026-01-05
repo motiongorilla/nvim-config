@@ -52,5 +52,7 @@ require("lazy").setup({
     "windwp/nvim-ts-autotag",
     -- Colorschemes
     "slugbyte/lackluster.nvim",
+    -- Local plugins
+    {dir = "D:/coding/neovim_plugins/p4nvim"},
 })
 

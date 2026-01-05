@@ -1,8 +1,6 @@
-local lspconfig = require('lspconfig')
-
 require('mason').setup({})
 require('mason-lspconfig').setup({
-    ensure_installed = { 'lua_ls','ruff', 'clangd', 'rust_analyzer',},
+    ensure_installed = { 'lua_ls','ruff', 'clangd', 'rust_analyzer', "clangd"},
 })
 
 local opts = { noremap=true, silent=true }
@@ -81,34 +79,12 @@ cmp.setup({
 
 local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
-local ruff_config_path = vim.loop.cwd() .. '/ruff.toml'
-
-lspconfig.ruff.setup{
-    -- Disable hover in favor of Pyright
-    on_attach = function(client, _)
-        client.server_capabilities.hoverProvider = false
-    end,
-    on_attach = on_attach,
-    capabilities = capabilities,
-    root_dir = lspconfig.util.root_pattern("venv", ".git") or vim.fn.getcwd(),
-    init_options = {
-        settings = {
-            format = {
-                args = { "--config=" .. ruff_config_path }
-            },
-            lint = {
-                args = { "--config=" .. ruff_config_path }
-            }
-        }
-    },
-}
-
-lspconfig.html.setup {
+vim.lsp.config('html',{
     cmd = { "vscode-html-language-server", "--stdio" },
     on_attach = on_attach,
     capabilities = capabilities,
     filetypes = { "html", "htmldjango"},
-    root_dir = lspconfig.util.root_pattern("package.json", ".git"),
+    root_markers = {"package.json", ".git"},
     settings = {},
     init_options = {
         provideFormatter = true,
@@ -117,26 +93,26 @@ lspconfig.html.setup {
             javascript = true,
         },
     },
-}
+})
 
-lspconfig.htmx.setup{
+vim.lsp.config("htmx",{
     on_attach = on_attach,
     capabilities = capabilities,
     cmd = { "htmx-lsp" },
     filetypes = { "aspnetcorerazor", "astro", "astro-markdown", "blade", "clojure", "django-html", "htmldjango", "edge", "eelixir", "elixir", "ejs", "erb", "eruby", "gohtml", "gohtmltmpl", "haml", "handlebars", "hbs", "html", "htmlangular", "html-eex", "heex", "jade", "leaf", "liquid", "markdown", "mdx", "mustache", "njk", "nunjucks", "php", "razor", "slim", "twig", "javascript", "javascriptreact", "reason", "rescript", "typescript", "typescriptreact", "vue", "svelte", "templ" },
-    root_dir = lspconfig.util.root_pattern(".git"),
-}
+    root_markers = {".git"},
+})
 
-lspconfig.dockerls.setup{
+vim.lsp.config("dockerls",{
     on_attach = on_attach,
     capabilities = capabilities,
     cmd = { "docker-langserver", "--stdio" },
     filetypes = {"dockerfile"},
-    root_dir = lspconfig.util.root_pattern(".git"),
+    root_markers = {".git"},
     single_file_support = true,
-}
+})
 
-lspconfig.pyright.setup {
+vim.lsp.config("pyright", {
     on_attach = on_attach,
     capabilities = capabilities,
     cmd = { "pyright-langserver", "--stdio" },
@@ -150,10 +126,10 @@ lspconfig.pyright.setup {
             }
         }
     },
-    root_dir = function() return vim.fn.getcwd() end
-}
+    root_markers = {vim.fn.getcwd()}
+})
 
-lspconfig.rust_analyzer.setup {
+vim.lsp.config("rust_analyzer", {
     -- Server-specific settings. See `:help lspconfig-setup`
     settings = {
         ['rust-analyzer'] = {
@@ -164,20 +140,92 @@ lspconfig.rust_analyzer.setup {
             },
         },
     },
-}
+})
 
-lspconfig.slint_lsp.setup {
+vim.lsp.config("slint_lsp", {
     cmd = { "slint-lsp" },
     filetypes = { "slint" },
     single_file_support = true
-}
+})
 
-lspconfig.clangd.setup {
+vim.lsp.config("clangd", {
     on_attach = function(client, bufnr)
         client.server_capabilities.signatureHelpProvider = false
         on_attach(client, bufnr)
     end,
     capabilities = capabilities,
     cmd = { 'clangd', '-j=32', '--pch-storage=disk', '--completion-style=detailed' },
-    root_dir = function() return vim.fn.getcwd() end
-}
+    root_markers = {vim.fn.getcwd()}
+})
+
+vim.lsp.config('lua_ls', {
+  on_init = function(client)
+    if client.workspace_folders then
+      local path = client.workspace_folders[1].name
+      if
+        path ~= vim.fn.stdpath('config')
+        and (vim.uv.fs_stat(path .. '/.luarc.json') or vim.uv.fs_stat(path .. '/.luarc.jsonc'))
+      then
+        return
+      end
+    end
+
+    client.config.settings.Lua = vim.tbl_deep_extend('force', client.config.settings.Lua, {
+      runtime = {
+        -- Tell the language server which version of Lua you're using (most
+        -- likely LuaJIT in the case of Neovim)
+        version = 'LuaJIT',
+        -- Tell the language server how to find Lua modules same way as Neovim
+        -- (see `:h lua-module-load`)
+        path = {
+          'lua/?.lua',
+          'lua/?/init.lua',
+        },
+      },
+      -- Make the server aware of Neovim runtime files
+      workspace = {
+        checkThirdParty = false,
+        library = {
+          vim.env.VIMRUNTIME
+          -- Depending on the usage, you might want to add additional paths
+          -- here.
+          -- '${3rd}/luv/library'
+          -- '${3rd}/busted/library'
+        }
+        -- Or pull in all of 'runtimepath'.
+        -- NOTE: this is a lot slower and will cause issues when working on
+        -- your own configuration.
+        -- See https://github.com/neovim/nvim-lspconfig/issues/3189
+        -- library = {
+        --   vim.api.nvim_get_runtime_file('', true),
+        -- }
+      }
+    })
+  end,
+  settings = {
+    Lua = {}
+  }
+})
+
+local ruff_config_path = vim.loop.cwd() .. '/ruff.toml'
+
+vim.lsp.config("ruff",{
+    -- Disable hover in favor of Pyright
+    on_attach = function(client, _)
+        client.server_capabilities.hoverProvider = false
+    end,
+    on_attach = on_attach,
+    capabilities = capabilities,
+    root_markers = {".venv", ".git", vim.fn.getcwd()},
+    init_options = {
+        settings = {
+            format = {
+                args = { "--config=" .. ruff_config_path }
+            },
+            lint = {
+                args = { "--config=" .. ruff_config_path }
+            }
+        }
+    },
+})
+
